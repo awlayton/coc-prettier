@@ -208,12 +208,8 @@ export async function format(
     const config = await prettierInstance.resolveConfig(fileName, {
       editorconfig: true
     })
-    const prettierStandard =  requireLocalPkg(
-      u.fsPath,
-      'prettier-standard'
-    ) as Omit<Prettier, 'version'>
     return safeExecution(
-      () => prettierStandard.format(text, config),
+      () => prettierInstance.format(text, config),
       text,
       fileName
     )
