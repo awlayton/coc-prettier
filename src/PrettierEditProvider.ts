@@ -195,6 +195,18 @@ export async function format(
     }
   )
 
+  if (vscodeConfig.standardIntegration) {
+    const prettierStandard =  requireLocalPkg(
+      u.fsPath,
+      'prettier-standard'
+    ) as Omit<Prettier, 'version'>
+    return safeExecution(
+      () => prettierStandard.format(text, {}),
+      text,
+      fileName
+    )
+  }
+
   if (vscodeConfig.tslintIntegration && parser === 'typescript') {
     return safeExecution(
       () => {
