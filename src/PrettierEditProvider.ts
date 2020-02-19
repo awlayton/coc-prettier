@@ -196,12 +196,24 @@ export async function format(
   )
 
   if (vscodeConfig.standardIntegration) {
+    const localPrettier = (await requireLocalPkg(
+      path.dirname(fileName),
+      'prettier-standard',
+      { silent: true, ignoreBundled: true }
+    )) as Omit<Prettier, 'version'>
+    let prettierInstance = localPrettier
+    if (!prettierInstance && !localOnly) {
+      prettierInstance = require('prettier-standard')
+    }
+    const config = await prettierInstance.resolveConfig(fileName, {
+      editorconfig: true
+    })
     const prettierStandard =  requireLocalPkg(
       u.fsPath,
       'prettier-standard'
     ) as Omit<Prettier, 'version'>
     return safeExecution(
-      () => prettierStandard.format(text, {}),
+      () => prettierStandard.format(text, config),
       text,
       fileName
     )
