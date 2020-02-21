@@ -102,6 +102,11 @@ interface ExtensionConfig {
   disableSuccessMessage: boolean
 }
 
+export type PrettierFileInfo = {
+  ignored: boolean,
+  inferredParser: ParserOption | null
+}
+
 /**
  * Configuration for prettier-vscode
  */
@@ -121,6 +126,13 @@ export interface Prettier {
       editorconfig?: boolean
     }
   ) => Promise<PrettierConfig>
+  getFileInfo: (
+    filePath: string,
+    options?: {
+      ignorePath?: string,
+      withNodeModules?: boolean
+    }
+  ) => Promise<PrettierFileInfo>
   resolveConfigFile: (
     filePath: string,
   ) => Promise<string>

@@ -2,7 +2,7 @@ import {
   Uri,
   workspace,
   DocumentFormattingEditProvider,
-  DocumentRangeFormattingEditProvider,
+  DocumentRangeFormattingEditProvider
 } from 'coc.nvim'
 import path from 'path'
 import {
@@ -10,7 +10,7 @@ import {
   FormattingOptions,
   Range,
   TextDocument,
-  TextEdit,
+  TextEdit
 } from 'vscode-languageserver-protocol'
 import { addToOutput, safeExecution } from './errorHandler'
 import { requireLocalPkg } from './requirePkg'
@@ -21,13 +21,13 @@ import {
   PrettierEslintFormat,
   PrettierStylelint,
   PrettierTslintFormat,
-  PrettierVSCodeConfig,
+  PrettierVSCodeConfig
 } from './types.d'
 import {
   allLanguages,
   getConfig,
   getParsersFromLanguageId,
-  getPrettierInstance,
+  getPrettierInstance
 } from './utils'
 
 /**
@@ -45,7 +45,7 @@ interface ResolveConfigResult {
  *
  * @param filePath file's path
  */
-async function resolveConfig(
+async function resolveConfig (
   filePath: string,
   options: {
     editorconfig?: boolean
@@ -83,7 +83,7 @@ async function resolveConfig(
  * @param prettierConfig prettier's file config
  * @param vscodeConfig our config
  */
-function mergeConfig(
+function mergeConfig (
   hasPrettierConfig: boolean,
   additionalConfig: Partial<PrettierConfig>,
   prettierConfig: Partial<PrettierConfig>,
@@ -103,7 +103,7 @@ function mergeConfig(
  * @param path formatting file's path
  * @returns {string} formatted text
  */
-export async function format(
+export async function format (
   text: string,
   { languageId, uri }: TextDocument,
   customOptions: Partial<PrettierConfig>
@@ -155,13 +155,13 @@ export async function format(
     'javascriptreact',
     'typescript',
     'typescriptreact',
-    'vue',
+    'vue'
   ].includes(languageId)
 
   const { config: fileOptions, error } = await resolveConfig(fileName, {
     editorconfig: true,
     onlyUseLocalVersion: localOnly,
-    requireConfig: vscodeConfig.requireConfig,
+    requireConfig: vscodeConfig.requireConfig
   })
   const hasConfig = fileOptions != null
   if (!hasConfig && vscodeConfig.requireConfig) {
@@ -191,7 +191,7 @@ export async function format(
       semi: vscodeConfig.semi,
       useTabs: vscodeConfig.useTabs,
       proseWrap: vscodeConfig.proseWrap,
-      arrowParens: vscodeConfig.arrowParens,
+      arrowParens: vscodeConfig.arrowParens
     }
   )
 
@@ -205,9 +205,16 @@ export async function format(
     if (!prettierInstance && !localOnly) {
       prettierInstance = require('prettier-standard')
     }
-    const config = await prettierInstance.resolveConfig(fileName, {
+    const config = (await prettierInstance.resolveConfig(fileName, {
       editorconfig: true
+    })) || { parser: null, filepath: '' }
+    const info = await prettierInstance.getFileInfo(fileName, {
+      withNodeModules: true
     })
+    config.filepath = fileName
+    if (!config.parser) {
+      config.parser = info.inferredParser
+    }
     return safeExecution(
       () => prettierInstance.format(text, config),
       text,
@@ -225,7 +232,7 @@ export async function format(
         return prettierTslint({
           text,
           filePath: fileName,
-          fallbackPrettierOptions: prettierOptions,
+          fallbackPrettierOptions: prettierOptions
         })
       },
       text,
@@ -245,7 +252,7 @@ export async function format(
         return prettierEslint({
           text,
           filePath: fileName,
-          fallbackPrettierOptions: prettierOptions,
+          fallbackPrettierOptions: prettierOptions
         })
       },
       text,
@@ -262,7 +269,7 @@ export async function format(
       prettierStylelint.format({
         text,
         filePath: fileName,
-        prettierOptions,
+        prettierOptions
       }),
       text,
       fileName
@@ -296,7 +303,7 @@ export async function format(
   )
 }
 
-export function fullDocumentRange(document: TextDocument): Range {
+export function fullDocumentRange (document: TextDocument): Range {
   const lastLineId = document.lineCount - 1
   let doc = workspace.getDocument(document.uri)
 
@@ -310,9 +317,9 @@ class PrettierEditProvider
   implements
     DocumentRangeFormattingEditProvider,
     DocumentFormattingEditProvider {
-  constructor(private _fileIsIgnored: (filePath: string) => boolean) {}
+  constructor (private _fileIsIgnored: (filePath: string) => boolean) {}
 
-  public provideDocumentRangeFormattingEdits(
+  public provideDocumentRangeFormattingEdits (
     document: TextDocument,
     range: Range,
     _options: FormattingOptions,
@@ -320,11 +327,11 @@ class PrettierEditProvider
   ): Promise<TextEdit[]> {
     return this._provideEdits(document, {
       rangeStart: document.offsetAt(range.start),
-      rangeEnd: document.offsetAt(range.end),
+      rangeEnd: document.offsetAt(range.end)
     })
   }
 
-  public provideDocumentFormattingEdits(
+  public provideDocumentFormattingEdits (
     document: TextDocument,
     _options: FormattingOptions,
     _token: CancellationToken
@@ -332,7 +339,7 @@ class PrettierEditProvider
     return this._provideEdits(document, {})
   }
 
-  private async _provideEdits(
+  private async _provideEdits (
     document: TextDocument,
     options: Partial<PrettierConfig>
   ): Promise<TextEdit[]> {
